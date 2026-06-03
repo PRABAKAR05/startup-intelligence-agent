@@ -205,8 +205,11 @@ def generate_reports(startups_dict):
         f.write(html_content)
         
     # 2. CSV / XLSX Exports
-    df = pd.DataFrame(flat_data)
-    df = df.sort_values(by="Placement Score", ascending=False)
+    if not flat_data:
+        df = pd.DataFrame(columns=["Startup", "Funding Amount", "Hiring Score", "Placement Score", "Careers Page", "Open Roles", "Founder", "Website"])
+    else:
+        df = pd.DataFrame(flat_data)
+        df = df.sort_values(by="Placement Score", ascending=False)
     
     df.to_csv(CSV_REPORT_FILE, index=False)
     df.to_csv(HOT_STARTUPS_FILE, index=False)

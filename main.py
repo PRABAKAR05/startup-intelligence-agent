@@ -116,16 +116,23 @@ def main():
         logger.warning("Skipping founder enrichment and scoring due to exhausted daily quota.")
     
     # Report Generation
-    if startups:
-        html_content = generate_reports(startups)
-        
-        # Send Email
-        send_email(html_content)
-        
-        # Update History
+    html_content = generate_reports(startups)
+    
+    if not startups:
+        # If no startups found, prepend a friendly message indicating no news.
+        # This will be displayed at the top of the email.
+        html_content = html_content.replace(
+            "<h1>Indian Startup Funding & Hiring Report", 
+            "<p style='color: #d9534f; font-weight: bold; font-size: 18px;'>There is no funding or hiring news found today.</p>\n<h1>Indian Startup Funding & Hiring Report"
+        )
+        logger.info("No new startup updates found today. Sending 'no news' email anyway.")
+    
+    # Send Email
+    send_email(html_content)
+    
+    # Update History
+    if processed:
         update_history(processed)
-    else:
-        logger.info("No new startup updates found today. Skipping email.")
 
     logger.info("Run completed successfully.")
 
