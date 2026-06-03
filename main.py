@@ -2,6 +2,7 @@ import os
 import time
 import pandas as pd
 from datetime import datetime
+import config
 from config import HISTORY_FILE, logger
 from scraper import scrape_articles
 from funding_extractor import extract_funding
@@ -56,6 +57,10 @@ def main():
         # We need to hit Gemini for each category if it might contain it.
         # To save tokens, one could combine prompts, but separation is cleaner.
         
+        if getattr(config, 'DAILY_QUOTA_EXHAUSTED', False):
+            logger.warning("Daily Quota Exhausted flag detected. Stopping article processing.")
+            break
+            
         funding_data = extract_funding(article['content'], article['url'], article['title'], article['published_date'])
         hiring_data = extract_hiring(article['content'], article['url'], article['title'], article['published_date'])
         intern_fresh_data = extract_internships_freshers(article['content'], article['url'], article['title'], article['published_date'])
@@ -99,13 +104,16 @@ def main():
     logger.info(f"Found updates for {len(startups)} startups.")
     
     # Enrichment
-    for name, data in startups.items():
-        founders_to_enrich = data.get('founders', [])
-        if founders_to_enrich:
-            data['enriched_founders'] = enrich_founders(name, founders_to_enrich)
-            
-    # Scoring
-    startups = score_startups(startups)
+    if not getattr(config, 'DAILY_QUOTA_EXHAUSTED', False):
+        for name, data in startups.items():
+            founders_to_enrich = data.get('founders', [])
+            if founders_to_enrich:
+                data['enriched_founders'] = enrich_founders(name, founders_to_enrich)
+                
+        # Scoring
+        startups = score_startups(startups)
+    else:
+        logger.warning("Skipping founder enrichment and scoring due to exhausted daily quota.")
     
     # Report Generation
     if startups:
