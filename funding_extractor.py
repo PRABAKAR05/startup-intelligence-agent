@@ -1,10 +1,9 @@
 import json
-import google.generativeai as genai
+from google import genai
 from config import GEMINI_API_KEY, logger
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-pro')
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def extract_funding(article_content, article_url, article_title, pub_date):
@@ -32,7 +31,10 @@ def extract_funding(article_content, article_url, article_title, pub_date):
     Output JSON ONLY. Do not include markdown blocks.
     """
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         text = response.text.strip()
         if text.startswith("```json"):
             text = text[7:]

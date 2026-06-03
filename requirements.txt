@@ -3,7 +3,7 @@ beautifulsoup4
 pandas
 lxml
 python-dotenv
-google-generativeai
+google-genai
 jinja2
 openpyxl
 tenacity
