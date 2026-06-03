@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+pandas
+lxml
+python-dotenv
+google-generativeai
+jinja2
+openpyxl
+tenacity

@@ -1,0 +1,45 @@
+name: Daily Startup Intelligence Report
+
+on:
+  schedule:
+    # Runs at 7:00 AM IST (which is 1:30 AM UTC)
+    - cron: '30 1 * * *'
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # Needed to commit changes back
+        token: ${{ secrets.GITHUB_TOKEN }} 
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Startup Intelligence Agent
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+      run: |
+        python main.py
+
+    - name: Commit history updates
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        git add data/history.csv
+        git commit -m "chore: Update history.csv after daily run" || echo "No changes to commit"
+        git push
