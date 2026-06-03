@@ -43,12 +43,25 @@ logger = logging.getLogger("StartupIntelligence")
 
 # --- News Sources ---
 RSS_FEEDS = [
+    # Top Startup Specific Platforms
     "https://yourstory.com/feed",
     "https://inc42.com/feed/",
     "https://entrackr.com/feed/",
     "https://techcircle.in/feed",
     "https://www.vccircle.com/feed",
-    "https://startupnews.fyi/feed/"
+    "https://startupnews.fyi/feed/",
+    "https://the-ken.com/feed/",
+    
+    # Major Dailies & Business News
+    "https://economictimes.indiatimes.com/tech/startups/rssfeeds/2147477994.cms",
+    "https://www.moneycontrol.com/rss/startups.xml",
+    "https://www.business-standard.com/rss/companies-101.rss",
+    "https://www.forbesindia.com/rssfeeds/rss_all.xml",
+    "https://feeds.feedburner.com/ndtvprofit-latest",
+    "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms",
+    "https://indianexpress.com/section/business/feed/",
+    "https://www.thehindubusinessline.com/economy/feeder/default.rss",
+    "https://www.indiatoday.in/rss/1206550"
 ]
 
 # Note: Some sources might not have RSS or easily scrapable static pages,

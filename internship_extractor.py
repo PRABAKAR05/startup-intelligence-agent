@@ -2,8 +2,7 @@ import json
 from google import genai
 from config import GEMINI_API_KEY, logger
 from tenacity import retry, stop_after_attempt, wait_exponential
-
-client = genai.Client(api_key=GEMINI_API_KEY)
+from ai_client import generate_content_with_rate_limit
 
 @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=10, max=60))
 def extract_internships_freshers(article_content, article_url, article_title, pub_date):
@@ -23,7 +22,7 @@ def extract_internships_freshers(article_content, article_url, article_title, pu
     Output JSON ONLY. Do not include markdown blocks.
     """
     try:
-        response = client.models.generate_content(
+        response = generate_content_with_rate_limit(
             model='gemini-2.5-flash',
             contents=prompt,
         )
