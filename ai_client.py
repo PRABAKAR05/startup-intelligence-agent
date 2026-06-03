@@ -2,7 +2,7 @@ import time
 import re
 from google import genai
 import config
-from config import GEMINI_API_KEY, logger
+from config import API_KEYS, logger
 
 class DailyQuotaExhaustedError(Exception):
     pass
@@ -12,7 +12,11 @@ class DailyQuotaExhaustedError(Exception):
 _last_call_ts = 0.0
 _min_interval_seconds = 12.0
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+_current_key_idx = 0
+if not API_KEYS:
+    raise ValueError("No GEMINI API keys provided")
+    
+client = genai.Client(api_key=API_KEYS[_current_key_idx])
 
 def _extract_retry_seconds_from_err(exc_text: str) -> int:
     m = re.search(r"retryDelay':\s*'(\d+)s'", exc_text)
@@ -61,9 +65,18 @@ def generate_content_with_rate_limit(model: str, contents: str, max_attempts: in
             # If it's a 429 / RESOURCE_EXHAUSTED, respect server RetryInfo when present
             if 'RESOURCE_EXHAUSTED' in err_text or '429' in err_text:
                 if 'GenerateRequestsPerDay' in err_text or 'RequestsPerDay' in err_text:
-                    logger.error("Daily API quota exhausted. Cannot continue.")
-                    config.DAILY_QUOTA_EXHAUSTED = True
-                    raise DailyQuotaExhaustedError("Daily API quota exhausted")
+                    global _current_key_idx, client
+                    logger.warning(f"Daily API quota exhausted for key index {_current_key_idx}.")
+                    _current_key_idx += 1
+                    
+                    if _current_key_idx < len(API_KEYS):
+                        logger.info(f"Switching to backup API key {_current_key_idx + 1} of {len(API_KEYS)}")
+                        client = genai.Client(api_key=API_KEYS[_current_key_idx])
+                        continue # Retry immediately with the new key!
+                    else:
+                        logger.error("All available API keys exhausted. Cannot continue.")
+                        config.DAILY_QUOTA_EXHAUSTED = True
+                        raise DailyQuotaExhaustedError("All API keys exhausted")
                     
                 try:
                     retry_seconds = _extract_retry_seconds_from_err(err_text)
