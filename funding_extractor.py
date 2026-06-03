@@ -2,10 +2,9 @@ import json
 from google import genai
 from config import GEMINI_API_KEY, logger
 from tenacity import retry, stop_after_attempt, wait_exponential
+from ai_client import generate_content_with_rate_limit
 
-client = genai.Client(api_key=GEMINI_API_KEY)
-
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=10, max=60))
 def extract_funding(article_content, article_url, article_title, pub_date):
     prompt = f"""
     You are an AI trained to extract startup funding news.
@@ -31,7 +30,7 @@ def extract_funding(article_content, article_url, article_title, pub_date):
     Output JSON ONLY. Do not include markdown blocks.
     """
     try:
-        response = client.models.generate_content(
+        response = generate_content_with_rate_limit(
             model='gemini-2.5-flash',
             contents=prompt,
         )

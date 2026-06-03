@@ -5,7 +5,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=10, max=60))
 def extract_hiring(article_content, article_url, article_title, pub_date):
     prompt = f"""
     You are an AI trained to extract startup hiring news.

@@ -1,4 +1,5 @@
 import os
+import time
 import pandas as pd
 from datetime import datetime
 from config import HISTORY_FILE, logger
@@ -58,6 +59,9 @@ def main():
         funding_data = extract_funding(article['content'], article['url'], article['title'], article['published_date'])
         hiring_data = extract_hiring(article['content'], article['url'], article['title'], article['published_date'])
         intern_fresh_data = extract_internships_freshers(article['content'], article['url'], article['title'], article['published_date'])
+        
+        # Respect Gemini Free Tier Rate Limits (15 RPM -> 3 calls = 12s, plus a little buffer)
+        time.sleep(15)
         
         # Merge data by startup name
         startup_name = None
