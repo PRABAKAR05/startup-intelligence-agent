@@ -29,6 +29,7 @@ def _extract_retry_seconds_from_err(exc_text: str) -> int:
     return 60
 
 def generate_content_with_rate_limit(model: str, contents: str, max_attempts: int = 5, **kwargs):
+    global client, _current_key_idx, _last_call_ts
     """
     Call Gemini with simple client-side throttling and robust retries on 429.
     - Enforces a minimum interval between calls (_min_interval_seconds).
@@ -36,7 +37,6 @@ def generate_content_with_rate_limit(model: str, contents: str, max_attempts: in
       exponential backoff across attempts.
     - Raises the last exception if retries are exhausted.
     """
-    global _last_call_ts
     attempt = 0
     last_exc = None
 
@@ -65,7 +65,6 @@ def generate_content_with_rate_limit(model: str, contents: str, max_attempts: in
             # If it's a 429 / RESOURCE_EXHAUSTED, respect server RetryInfo when present
             if 'RESOURCE_EXHAUSTED' in err_text or '429' in err_text:
                 if 'GenerateRequestsPerDay' in err_text or 'RequestsPerDay' in err_text:
-                    global _current_key_idx, client
                     logger.warning(f"Daily API quota exhausted for key index {_current_key_idx}.")
                     _current_key_idx += 1
                     
