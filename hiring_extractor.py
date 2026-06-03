@@ -4,7 +4,7 @@ from config import GEMINI_API_KEY, logger
 from tenacity import retry, stop_after_attempt, wait_exponential
 from ai_client import generate_content_with_rate_limit
 
-@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=10, max=60))
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=2, min=10, max=60), retry_error_callback=lambda retry_state: None)
 def extract_hiring(article_content, article_url, article_title, pub_date):
     prompt = f"""
     You are an AI trained to extract startup hiring news.
@@ -25,24 +25,20 @@ def extract_hiring(article_content, article_url, article_title, pub_date):
     
     Output JSON ONLY. Do not include markdown blocks.
     """
-    try:
-        response = generate_content_with_rate_limit(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.endswith("```"):
-            text = text[:-3]
-        
-        data = json.loads(text)
-        if data.get("is_hiring_news"):
-            data["article_url"] = article_url
-            data["publication_date"] = pub_date
-            # Attempt to split roles to fresher/internship for later scoring if not specified
-            return data
-        return None
-    except Exception as e:
-        logger.error(f"Error extracting hiring news from {article_url}: {e}")
-        return None
+    response = generate_content_with_rate_limit(
+        model='gemini-2.5-flash',
+        contents=prompt,
+    )
+    text = response.text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    if text.endswith("```"):
+        text = text[:-3]
+    
+    data = json.loads(text)
+    if data.get("is_hiring_news"):
+        data["article_url"] = article_url
+        data["publication_date"] = pub_date
+        # Attempt to split roles to fresher/internship for later scoring if not specified
+        return data
+    return None
